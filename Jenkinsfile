@@ -14,7 +14,7 @@ pipeline {
         stage('Generate Secret') {
             agent any  // Use any available agent for testing
             steps {
-			    withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
+			         withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
                 script {
                     // Generate a strong random secret using openssl
                     def secret = sh(returnStdout: true, script: 'openssl rand -base64 32').trim()
