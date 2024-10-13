@@ -1,55 +1,57 @@
 pipeline {
-    agent any
+    agent none  // No specific agent defined globally
+
+    environment {
+        // AWS credentials and GCP credentials for testing (replace with valid credentials)
+        /*
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        */
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
+    }
 
     stages {
-        stage('build') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
+        stage('Generate Secret') {
+            agent any  // Use any available agent for testing
             steps {
-                  sh '''
-                    ls -al
-                    node --version
-                    npm --version
-                    npm ci
-                    npm run build
-                    ls -la
-                   '''
+			    withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
+                script {
+                    // Generate a strong random secret using openssl
+                    def secret = sh(returnStdout: true, script: 'openssl rand -base64 32').trim()
+
+                    // Save the secret to a file temporarily
+                    writeFile(file: 'secret.txt', text: secret)
+                    echo "Secret generated for testing: ${secret}"
+                }
             }
         }
-    stage('test') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
+
+        stage('Store in AWS Secrets Manager (Test)') {
+            agent any  // Use any available agent for testing
             steps {
-                  sh '''
-                    echo 'Test stage'
-                    npm test
-                    test  "/build/index.html"
-                   '''
+                script {
+                    // Simulate storing the secret in AWS Secrets Manager
+                    def secretName = "your-aws-secret-name"
+                    echo "Simulating storage of secret in AWS Secrets Manager: ${secretName}"
+                }
             }
         }
-    stage('E2E') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                    reuseNode true
+
+        stage('Store in GCP Secret Manager (Test)') {
+            agent any  // Use any available agent for testing
+            steps {
+                script {
+                    // Simulate storing the secret in GCP Secret Manager
+                    def secretName = "your-gcp-secret-name"
+                    echo "Simulating storage of secret in GCP Secret Manager: ${secretName}"
                 }
             }
-            steps {
-                  sh '''
-                    npm install serve
-                    node_modules/.bin/serve -s build &
-                    sleep 10
-                    npx playwright test
-                   '''
-            }
-        }    
+        }
     }
+
+    post {
+    always {
+        echo "Skipping cleanup for testing."
+    }
+}
 }
