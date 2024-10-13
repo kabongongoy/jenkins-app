@@ -54,8 +54,9 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace to remove sensitive data
-            deleteDir()
+            node {  // Ensure deleteDir is inside a node block
+                deleteDir()  // Clean up all files created during the build
+            }
         }
     }
 }
