@@ -1,57 +1,61 @@
 pipeline {
-    agent none  // No specific agent defined globally
+    agent any  // Use any available agent for this job
 
     environment {
-        // AWS credentials and GCP credentials for testing (replace with valid credentials)
-        /*
+        // AWS credentials configured in Jenkins (replace 'aws-access-key-id' with your credentials ID)
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-        */
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-key')
     }
 
     stages {
         stage('Generate Secret') {
-            agent any  // Use any available agent for testing
+            agent {
+                node {
+                    label 'any'
+                }
+            }
             steps {
-			         withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
                 script {
-                    // Generate a strong random secret using openssl
-                    def secret = sh(returnStdout: true, script: 'openssl rand -base64 32').trim()
+                    // Generate a strong random token using openssl
+                    def token = sh(returnStdout: true, script: 'openssl rand -base64 32').trim()
 
-                    // Save the secret to a file temporarily
-                    writeFile(file: 'secret.txt', text: secret)
-                    echo "Secret generated for testing: ${secret}"
+                    // Save the token to a file temporarily
+                    writeFile(file: 'secret-token.txt', text: token)
+                    echo "Secret token generated: ${token}"
                 }
             }
         }
 
-        stage('Store in AWS Secrets Manager (Test)') {
-            agent any  // Use any available agent for testing
-            steps {
-                script {
-                    // Simulate storing the secret in AWS Secrets Manager
-                    def secretName = "your-aws-secret-name"
-                    echo "Simulating storage of secret in AWS Secrets Manager: ${secretName}"
+        stage('Store Secret in AWS Secrets Manager') {
+            agent {
+                node {
+                    label 'any'
                 }
             }
-        }
-
-        stage('Store in GCP Secret Manager (Test)') {
-            agent any  // Use any available agent for testing
             steps {
                 script {
-                    // Simulate storing the secret in GCP Secret Manager
-                    def secretName = "your-gcp-secret-name"
-                    echo "Simulating storage of secret in GCP Secret Manager: ${secretName}"
+                    // Define your secret name
+                    def secretName = "your-aws-secret-name"  // Update with your secret name
+                    def region = "your-aws-region"            // Update with your AWS region
+
+                    // Use AWS CLI to store the secret
+                    sh """
+                        aws secretsmanager put-secret-value \
+                        --secret-id ${secretName} \
+                        --secret-string file://secret-token.txt \
+                        --region ${region}
+                    """
+
+                    echo "Secret stored in AWS Secrets Manager with name: ${secretName}"
                 }
             }
         }
     }
 
     post {
-    always {
-        echo "Skipping cleanup for testing."
+        always {
+            // Clean up the workspace to remove sensitive data
+            deleteDir()
+        }
     }
-}
 }
