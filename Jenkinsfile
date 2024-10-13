@@ -47,6 +47,7 @@ pipeline {
 
     post {
         always {
+            // Use a generic node to delete the workspace
             node {
                 // Clean up the workspace by deleting all files
                 deleteDir()
