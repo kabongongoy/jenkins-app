@@ -9,7 +9,7 @@ pipeline {
                     def secretToken = sh(script: 'openssl rand -base64 32', returnStdout: true).trim()
                     echo "Generated Secret Token: ${secretToken}"
 
-                    // Save the token to a file for use in AWS Secrets Manager
+                    // Save the token to a file in the workspace
                     writeFile file: 'secret-token.txt', text: secretToken
                 }
             }
@@ -55,9 +55,22 @@ pipeline {
                 // Bind the AWS credentials using Jenkins credentials
                 withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     script {
+                        // Create AWS credentials file for the Docker container
+                        sh """
+                            mkdir -p /root/.aws
+                            echo "[default]" > /root/.aws/config
+                            echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> /root/.aws/config
+                            echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> /root/.aws/config
+                        """
+
                         // Use AWS CLI to store the token in AWS Secrets Manager
-                        def secretName = "Hoitcs"  // Update with your AWS secret name
+                        def secretName = "hoitcs"  // Update with your AWS secret name
                         def region = "us-east-1"                   // Update with your AWS region
+
+                        // Move the secret token file to the Docker container
+                        sh """
+                            cp ../secret-token.txt ./secret-token.txt
+                        """
 
                         // Try to create the secret
                         try {
