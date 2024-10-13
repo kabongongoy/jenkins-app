@@ -6,12 +6,6 @@ pipeline {
         }
     }
 
-    environment {
-        // Use AWS credentials configured in Jenkins
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-    }
-
     stages {
         stage('Generate and Display Token') {
             steps {
@@ -43,13 +37,6 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            // Clean up the workspace by deleting all files
-            deleteDir()
         }
     }
 }
