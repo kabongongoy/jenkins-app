@@ -40,7 +40,7 @@ pipeline {
 
                         // Use AWS CLI to store the token in AWS Secrets Manager
                         def secretName = "your-aws-secret-name"  // Update with your AWS secret name
-                        def region = "your-aws-region"            // Update with your AWS region
+                        def region = "us-east-1"            // Update with your AWS region
 
                         // Store the token in AWS Secrets Manager using AWS CLI
                         sh """
