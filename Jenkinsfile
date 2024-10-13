@@ -13,8 +13,7 @@ pipeline {
                     echo "Generated token: ${token}"
 
                     // Save the token to a file temporarily
-                    writeFile(file: 'secret-token.txt', text: token
-                    )
+                    writeFile(file: 'secret-token.txt', text: token)
                 }
             }
         }
@@ -23,23 +22,33 @@ pipeline {
             agent {
                 docker {
                     image 'amazon/aws-cli:2.13.0'  // Use the AWS CLI Docker image
-                    args '-v /root/.aws:/root/.aws' // Mount AWS credentials if needed
                     args '--entrypoint=""'           // Override the default entrypoint
                 }
             }
             steps {
-                script {
-                    // Use AWS CLI to store the token in AWS Secrets Manager
-                    def secretName = "your-aws-secret-name"  // Update with your AWS secret name
-                    def region = "us-east-1"            // Update with your AWS region
+                // Bind the AWS credentials using Jenkins credentials
+                withCredentials([usernamePassword(credentialsId: 'aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    script {
+                        // Create AWS credentials file for the Docker container
+                        sh """
+                            mkdir -p ~/.aws
+                            echo "[default]" > ~/.aws/config
+                            echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> ~/.aws/config
+                            echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/config
+                        """
 
-                    // Store the token in AWS Secrets Manager using AWS CLI
-                    sh """
-                        aws secretsmanager put-secret-value \
-                        --secret-id ${secretName} \
-                        --secret-string file://secret-token.txt \
-                        --region ${region}
-                    """
+                        // Use AWS CLI to store the token in AWS Secrets Manager
+                        def secretName = "your-aws-secret-name"  // Update with your AWS secret name
+                        def region = "your-aws-region"            // Update with your AWS region
+
+                        // Store the token in AWS Secrets Manager using AWS CLI
+                        sh """
+                            aws secretsmanager put-secret-value \
+                            --secret-id ${secretName} \
+                            --secret-string file://secret-token.txt \
+                            --region ${region}
+                        """
+                    }
                 }
             }
         }
