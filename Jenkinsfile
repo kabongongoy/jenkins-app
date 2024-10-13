@@ -3,7 +3,6 @@ pipeline {
         docker {
             // Use the official AWS CLI Docker image
             image 'amazon/aws-cli:2.13.0'
-            label 'docker'  // Adjust this if necessary, based on your node label setup
             args '-v /root/.aws:/root/.aws'  // Optional: mount AWS credentials if needed
         }
     }
