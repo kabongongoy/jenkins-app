@@ -1,10 +1,15 @@
 pipeline {
     agent {
         docker {
-            // Use the official AWS CLI Docker image
-            image 'amazon/aws-cli:2.13.0'
-            args '-v /root/.aws:/root/.aws'  // Optional: mount AWS credentials if needed
+            image 'amazon/aws-cli:2.13.0'  // Use the AWS CLI image
+            args '-v /root/.aws:/root/.aws --entrypoint=""'  // Clear the ENTRYPOINT
         }
+    }
+
+    environment {
+        // Use AWS credentials configured in Jenkins
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
     }
 
     stages {
