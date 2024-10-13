@@ -67,17 +67,15 @@ pipeline {
                         def secretName = "hoitcs"  // Update with your AWS secret name
                         def region = "us-east-1"                   // Update with your AWS region
 
-                        // Move the secret token file to the Docker container
-                        sh """
-                            cp ../secret-token.txt ./secret-token.txt
-                        """
+                        // Read the secret token from the file directly into a variable
+                        def secretToken = readFile 'secret-token.txt'
 
                         // Try to create the secret
                         try {
                             sh """
                                 aws secretsmanager create-secret \
                                 --name ${secretName} \
-                                --secret-string file://secret-token.txt \
+                                --secret-string '${secretToken}' \
                                 --region ${region}
                             """
                         } catch (Exception e) {
@@ -88,7 +86,7 @@ pipeline {
                         def response = sh(script: """
                             aws secretsmanager put-secret-value \
                             --secret-id ${secretName} \
-                            --secret-string file://secret-token.txt \
+                            --secret-string '${secretToken}' \
                             --region ${region} --debug
                         """, returnStdout: true).trim()
 
