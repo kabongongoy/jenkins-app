@@ -1,12 +1,13 @@
 pipeline {
     agent {
         docker {
-            image 'amazon/aws-cli:2.13.0'
+            image 'amazon/aws-cli:2.13.0'  // Use the AWS CLI image
             args '-v /root/.aws:/root/.aws --entrypoint=""'  // Clear the ENTRYPOINT
         }
     }
 
     environment {
+        // Use AWS credentials configured in Jenkins
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
     }
@@ -29,8 +30,8 @@ pipeline {
                         writeFile(file: 'secret-token.txt', text: token)
 
                         // Use AWS CLI to store the token in AWS Secrets Manager
-                        def secretName = "your-aws-secret-name"
-                        def region = "your-aws-region"
+                        def secretName = "your-aws-secret-name"  // Update with your AWS secret name
+                        def region = "your-aws-region"            // Update with your AWS region
 
                         // Store the token in AWS Secrets Manager using AWS CLI
                         sh """
@@ -47,11 +48,8 @@ pipeline {
 
     post {
         always {
-            // Use a generic node to delete the workspace
-            node {
-                // Clean up the workspace by deleting all files
-                deleteDir()
-            }
+            // Clean up the workspace by deleting all files
+            deleteDir()
         }
     }
 }
