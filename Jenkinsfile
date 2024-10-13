@@ -47,7 +47,7 @@ pipeline {
                             aws secretsmanager put-secret-value \
                             --secret-id ${secretName} \
                             --secret-string file://secret-token.txt \
-                            --region ${region}
+                            --region ${region} --debug
                         """
                     }
                 }
