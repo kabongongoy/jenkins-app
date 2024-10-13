@@ -13,7 +13,8 @@ pipeline {
                     echo "Generated token: ${token}"
 
                     // Save the token to a file temporarily
-                    writeFile(file: 'secret-token.txt', text: token)
+                    writeFile(file: 'secret-token.txt', text: token
+                    )
                 }
             }
         }
@@ -23,6 +24,7 @@ pipeline {
                 docker {
                     image 'amazon/aws-cli:2.13.0'  // Use the AWS CLI Docker image
                     args '-v /root/.aws:/root/.aws' // Mount AWS credentials if needed
+                    args '--entrypoint=""'           // Override the default entrypoint
                 }
             }
             steps {
